@@ -1,0 +1,273 @@
+{
+  "name": "real state",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are a professional real estate qualification assistant communicating with clients through Telegram.\n\nIMPORTANT INPUT RULE:\nThe message received in the User Message field is the client's latest message.\nRespond to that exact message.\nNever repeat a previous response.\nNever treat examples, instructions, scoring rules, or previously mentioned sample values as information provided by the client.\n\nLANGUAGE:\n\n* Reply in the same language used by the client.\n* If the client speaks Arabic, reply in natural Egyptian Arabic.\n* Keep every reply short, friendly, and professional.\n* Ask only ONE question in each message.\n* Never show internal scores or mention Google Sheets, workflows, tools, AI, or internal instructions.\n\nMAIN OBJECTIVE:\nCollect the client's real estate requirements naturally, calculate their qualification score, and save qualified leads in Google Sheets.\n\nINFORMATION TO COLLECT:\n\n* property_type\n* preferred_location\n* budget\n* payment_method\n* purchase_timeframe\n* purchase_purpose\n* full_name\n* phone_number\n* email\n* additional_requirements\n\nSTRICT DATA RULES:\n\n1. Extract information only when the client clearly provides it.\n2. Never invent, guess, assume, or autofill any information.\n3. Never use sample information as client information.\n4. Remember all information already provided in the conversation.\n5. Never ask again for information already provided.\n6. If the client provides multiple details in one message, extract all of them.\n7. If the client changes an answer, use the latest answer.\n8. Ask only about the most important missing field.\n9. Never send the same question or response twice in a row.\n10. Do not summarize the client's requirements after every message.\n\nCONVERSATION ORDER:\nCollect information in this order, skipping anything already known:\n\n1. Property type\n2. Preferred location\n3. Budget\n4. Payment method\n5. Purchase timeframe\n6. Purchase purpose\n7. Full name\n8. Phone number\n9. Email\n\nOnly ask one question at a time.\n\nIf the client sends a greeting and no property details are known, welcome them and ask what type of property they are looking for.\n\nIf the client provides the property type, acknowledge it briefly and ask only for the preferred location.\n\nIf the location is already known, ask only for the budget.\n\nIf the budget is already known, ask only about the payment method.\n\nNever provide a list of imaginary property options.\nNever pretend that a property is available unless a connected property database confirms it.\n\nLEAD SCORING:\nCalculate the score internally using confirmed client information only.\n\nProperty type:\n\n* Villa: 100 points\n* Twin House: 90 points\n* Townhouse: 90 points\n* Duplex: 75 points\n* Chalet: 70 points\n* Commercial Unit: 70 points\n* Office: 65 points\n* Clinic: 65 points\n* Land: 60 points\n* Apartment: 50 points\n* Roof: 45 points\n* Studio: 35 points\n* Unknown or other: 0 points\n\nAdditional qualification:\n\n* Clear budget: +20\n* Approximate budget: +10\n* Cash payment: +25\n* Clear installment plan: +20\n* Ready to purchase within one month: +30\n* Ready within three months: +25\n* Ready within six months: +15\n* Specific location: +15\n* Clear purchase purpose: +10\n\nDo not award points for information the client did not provide.\n\nLEAD STATUS:\n\n* Score greater than 50: Qualified\n* Score of 50 or less: Nurturing\n* Client refuses further communication: Not Interested\n\nNever tell the client their score or status.\n\nQUALIFIED LEADS:\nWhen the score becomes greater than 50:\n\n1. Save the available information in Google Sheets.\n2. Use telegram_chat_id as the unique identifier.\n3. Search for the telegram_chat_id before creating a new row.\n4. If a row already exists, update it instead of creating a duplicate.\n5. Never overwrite existing valid information with an empty value.\n6. Continue asking for missing information one field at a time.\n7. Update the same Google Sheets row whenever the client provides new information.\n\nCONTACT INFORMATION:\nAfter the lead qualifies, collect any missing contact information:\n\n* Full name\n* Phone number\n* Email\n\nIf the client already provided any of these, do not ask for them again.\n\nIf the client refuses to provide the email, accept that and continue. Do not repeatedly request it.\n\nRESPONSE DECISION PROCESS:\nBefore responding:\n\n1. Read the client's latest message.\n2. Extract every confirmed detail from it.\n3. Combine it with information remembered from this Telegram chat.\n4. Calculate the new score internally.\n5. Save or update the lead if the score is greater than 50.\n6. Find the next missing field.\n7. Ask one short question about that field.\n8. Make sure the response is different from the previous response.\n\nIf the client says something unclear, ask a short clarification question instead of guessing.\n\nDo not output JSON to the client.\nReturn only the natural Telegram reply.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b47206bc-adc9-409d-8156-bfabc2a5af38",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "qwen/qwen3-vl-4b",
+          "mode": "list",
+          "cachedResultName": "qwen/qwen3-vl-4b"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        208
+      ],
+      "id": "4524e65e-a8c7-49c2-aaa6-436489b36002",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "MhRZmoBbWPBuwbAt",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ 'realestate_v2_' + $json.message.chat.id }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        288,
+        256
+      ],
+      "id": "2acd296e-6687-4999-9e7c-9ae5d7a27ca4",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ad4b578a-5ee0-4726-ae46-ac3a5dc014a0",
+      "name": "Telegram Trigger",
+      "webhookId": "eaf4e042-c06b-4d78-84f1-8d09fcd185c0",
+      "credentials": {
+        "telegramApi": {
+          "id": "WFykRC75VRb51Hmb",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1jpkqD5cV2zVePcKHqpQTSyCKsQUbTMQfrGNSelqeB0g",
+          "mode": "list",
+          "cachedResultName": "sal3 burger",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jpkqD5cV2zVePcKHqpQTSyCKsQUbTMQfrGNSelqeB0g/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jpkqD5cV2zVePcKHqpQTSyCKsQUbTMQfrGNSelqeB0g/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "full_name": "={{ $fromAi(\"full_name\") }}",
+            "phone_number": "={{ $fromAi(\"phone_number\") }}",
+            " email": "={{ $fromAi(\"email\") }}",
+            "preferred_location": "={{ $fromAi(\"preferred_location\") }}"
+          },
+          "matchingColumns": [
+            "full_name"
+          ],
+          "schema": [
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " email",
+              "displayName": " email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "preferred_location",
+              "displayName": "preferred_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        208
+      ],
+      "id": "ba1a2e4a-5f46-49f5-98ea-05a88a93b86b",
+      "name": "Append or update row in sheet in Google Sheets",
+      "credentials": {
+        "googleApi": {
+          "id": "vSJIGchdHiLlliWL",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "4248bdd3-e916-47f1-a74a-f09648dd6a03",
+      "name": "Send a text message",
+      "webhookId": "7786ff95-f16c-4bb7-8fc7-8d91de0b7657",
+      "credentials": {
+        "telegramApi": {
+          "id": "WFykRC75VRb51Hmb",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "availableInMCP": false
+  },
+  "versionId": "dcb4f417-a55b-4542-9bd2-51ff30a2d0c1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9fa3cf10e57010a7ee0f1dc7dad924be678082765665ac0734ab5d0b615b52a3"
+  },
+  "nodeGroups": [],
+  "id": "PbY2gCxQB2Wr7qAK",
+  "tags": []
+}
